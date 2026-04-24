@@ -959,6 +959,16 @@
   // ─── CONSTANTS ───
   const FUNCTION_URL = 'https://us-central1-ticket-seguro.cloudfunctions.net';
 
+  // ─── TOAST (definido primero) ───
+  function showToast(msg, color) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = color || 'var(--green)';
+    t.style.color = color ? '#fff' : '#001b0d';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3200);
+  }
+
   // ─── TOKEN STATE ───
   let activeToken = localStorage.getItem('ts_token') || null;
   let tokenPlan = localStorage.getItem('ts_plan') || null;
@@ -972,7 +982,7 @@
     if (sessionId) {
       showToast('⏳ Activando tu acceso...', '#f5c400');
       try {
-        const resp = await fetch(`${FUNCTION_URL}/activarToken`, {
+        const resp = await fetch(`${FUNCTION_URL}/activartoken`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId })
@@ -1062,7 +1072,7 @@
     animateSteps();
 
     try {
-      const resp = await fetch(`${FUNCTION_URL}/verificarBoleto`, {
+      const resp = await fetch(`${FUNCTION_URL}/verificarboleto`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input, type: activeTab, token: activeToken })
@@ -1178,7 +1188,7 @@
     closePaywall();
     showToast('⏳ Redirigiendo a pago...', '#f5c400');
     try {
-      const resp = await fetch(`${FUNCTION_URL}/crearPago`, {
+      const resp = await fetch(`${FUNCTION_URL}/crearpago`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: type })
