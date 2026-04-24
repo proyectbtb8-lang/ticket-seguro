@@ -622,7 +622,7 @@
   .risk-head { flex-wrap: wrap; }
   .toast { max-width: calc(100vw - 32px); text-align: center; }
 
-   (max-width: 480px) {
+  @media (max-width: 480px) {
     nav { gap: 10px; }
     .logo { font-size: 20px; letter-spacing: 1.4px; }
     .logo-dot { width: 8px; height: 8px; }
@@ -647,7 +647,7 @@
     .cta-final p { font-size: 16px; }
   }
 
-   (max-width: 360px) {
+  @media (max-width: 360px) {
     nav { padding: 12px 12px; }
     .logo { font-size: 18px; letter-spacing: 1px; }
     .nav-cta { font-size: 10px; padding: 7px 8px; }
@@ -657,7 +657,7 @@
     .browser-url { font-size: 10px; }
   }
 
-   (prefers-reduced-motion: reduce) {
+  @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.001ms !important; }
   }
 </style>
@@ -699,20 +699,22 @@
           <button class="itab" onclick="switchInputTab('text',this)">✍️ Describir oferta</button>
         </div>
         <div id="itab-url">
-          <label class="input-label" for="ticketLink">Pega el link del vendedor o página</label>
-          <div class="link-form">
-            <input class="link-input" id="ticketLink" type="url" placeholder="https://boletos-mundial-oferta.com" />
-            <button class="primary-btn" id="verifyBtn" onclick="startVerification()">Verificar ahora</button>
-          </div>
+          <label class="input-label" for="ticketLink">1. Pega el link del vendedor o página</label>
+          <input class="link-input" id="ticketLink" type="url" placeholder="https://boletos-mundial-oferta.com" />
         </div>
         <div id="itab-text" style="display:none">
-          <label class="input-label" for="ticketDesc">Describe lo que te están ofreciendo</label>
-          <div class="link-form" style="flex-direction:column;gap:8px">
-            <textarea class="link-input" id="ticketDesc" rows="3" style="resize:none;border-radius:14px;padding:12px 15px;line-height:1.5" placeholder="Ej: Me ofrecen 2 boletos para México vs Ecuador por $1,800 MXN. Solo acepta transferencia. Dice que solo tiene 2 horas…"></textarea>
-            <button class="primary-btn" id="verifyBtn2" onclick="startVerification()">Verificar ahora</button>
+          <label class="input-label" for="ticketDesc">1. Describe lo que te están ofreciendo</label>
+          <textarea class="link-input" id="ticketDesc" rows="3" style="resize:none;border-radius:14px;padding:12px 15px;line-height:1.5;width:100%" placeholder="Ej: Me ofrecen 2 boletos para México vs Ecuador por $1,800 MXN. Solo acepta transferencia. Dice que solo tiene 2 horas…"></textarea>
+        </div>
+
+        <div style="margin-top:12px">
+          <label class="input-label" for="checkoutEmail">2. Tu correo para enviarte el resultado</label>
+          <div class="link-form">
+            <input class="link-input" id="checkoutEmail" type="email" placeholder="tu@email.com" autocomplete="email" />
+            <button class="primary-btn" id="verifyBtn" onclick="startPaymentFlow()">Pagar y verificar</button>
           </div>
         </div>
-        <div class="microcopy" id="demoMsg">3 verificaciones gratis. Sin registro. Resultado en segundos.</div>
+        <div class="microcopy" id="demoMsg">Después del pago verificamos el link, mostramos el resultado y te mandamos el reporte por correo.</div>
       </div>
     </div>
 
@@ -912,23 +914,23 @@
   </footer>
 </div>
 
-<!-- PAYWALL -->
+<!-- CHECKOUT MODAL -->
 <div id="paywallOverlay" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.92);backdrop-filter:blur(10px);z-index:500;align-items:center;justify-content:center;padding:20px">
-  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:26px;padding:36px;max-width:400px;width:100%;text-align:center;animation:fadeUp .3s ease both">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:26px;padding:34px;max-width:430px;width:100%;text-align:center;animation:fadeUp .3s ease both">
     <div style="font-size:38px;margin-bottom:12px">🔒</div>
-    <div style="font-family:'Bebas Neue';font-size:38px;line-height:1;margin-bottom:10px">Verificaciones<br>agotadas</div>
-    <p style="color:var(--muted);font-size:14px;margin-bottom:28px;line-height:1.6">Usaste tus 3 verificaciones gratis.<br>El Mundial empieza pronto — no te arriesgues.</p>
+    <div style="font-family:'Bebas Neue';font-size:38px;line-height:1;margin-bottom:10px">Elige tu verificación</div>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px;line-height:1.6">Después del pago verificamos el link, mostramos el resultado en pantalla y lo enviamos a tu correo.</p>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
-      <button onclick="handlePayment('unlimited')" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1px solid rgba(255,51,51,.4);background:var(--red-dim);border-radius:16px;color:var(--text);cursor:pointer;font-family:'DM Sans'">
-        <div style="text-align:left"><div style="font-weight:700;font-size:14px">Ilimitado 7 días</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Acceso completo</div></div>
-        <div style="font-family:'Bebas Neue';font-size:26px;color:var(--red)">$99 MXN</div>
-      </button>
-      <button onclick="handlePayment('single')" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1px solid var(--border);background:var(--surface2);border-radius:16px;color:var(--text);cursor:pointer;font-family:'DM Sans'">
-        <div style="text-align:left"><div style="font-weight:700;font-size:14px">Una verificación</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Solo para esta vez</div></div>
+      <button onclick="handlePayment('single')" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1px solid rgba(255,51,51,.4);background:var(--red-dim);border-radius:16px;color:var(--text);cursor:pointer;font-family:'DM Sans'">
+        <div style="text-align:left"><div style="font-weight:700;font-size:14px">Una verificación</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Para este link u oferta</div></div>
         <div style="font-family:'Bebas Neue';font-size:26px;color:var(--red)">$49 MXN</div>
       </button>
+      <button onclick="handlePayment('unlimited')" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1px solid var(--border);background:var(--surface2);border-radius:16px;color:var(--text);cursor:pointer;font-family:'DM Sans'">
+        <div style="text-align:left"><div style="font-weight:700;font-size:14px">Ilimitado 7 días</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Ideal si vas a comparar varias ofertas</div></div>
+        <div style="font-family:'Bebas Neue';font-size:26px;color:var(--red)">$99 MXN</div>
+      </button>
     </div>
-    <div onclick="closePaywall()" style="font-size:12px;color:var(--muted2);cursor:pointer;text-decoration:underline;text-underline-offset:3px">No gracias, asumo el riesgo</div>
+    <div onclick="closePaywall()" style="font-size:12px;color:var(--muted2);cursor:pointer;text-decoration:underline;text-underline-offset:3px">Cancelar</div>
   </div>
 </div>
 
@@ -948,7 +950,6 @@
 <div class="toast" id="toast">Registrado</div>
 
 <script>
-  // ─── SCROLL REVEAL ───
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
@@ -956,10 +957,12 @@
   }, { threshold: 0.15 });
   document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
 
-  // ─── CONSTANTS ───
   const FUNCTION_URL = 'https://us-central1-ticket-seguro.cloudfunctions.net';
 
-  // ─── TOAST (definido primero) ───
+  let activeTab = 'url';
+  let currentResult = null;
+  let pendingVerification = null;
+
   function showToast(msg, color) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -969,58 +972,6 @@
     setTimeout(() => t.classList.remove('show'), 3200);
   }
 
-  // ─── TOKEN STATE ───
-  let activeToken = localStorage.getItem('ts_token') || null;
-  let tokenPlan = localStorage.getItem('ts_plan') || null;
-  let currentResult = null;
-  let activeTab = 'url';
-
-  // ─── CHECK SESSION ON LOAD (regreso de Stripe) ───
-  (async () => {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session_id');
-    if (sessionId) {
-      showToast('⏳ Activando tu acceso...', '#f5c400');
-      try {
-        const resp = await fetch(`${FUNCTION_URL}/activarToken`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
-        });
-        const data = await resp.json();
-        if (data.token) {
-          activeToken = data.token;
-          tokenPlan = data.plan;
-          localStorage.setItem('ts_token', data.token);
-          localStorage.setItem('ts_plan', data.plan);
-          showToast('✓ Acceso activado. Ya puedes verificar.', '#00e676');
-          window.history.replaceState({}, '', '/');
-        }
-      } catch(e) {
-        showToast('Error activando acceso. Contacta soporte.', '#ff3333');
-      }
-    }
-    updateAccessUI();
-  })();
-
-  function updateAccessUI() {
-    const label = document.getElementById('usesLabel');
-    if (activeToken) {
-      label.textContent = tokenPlan === 'unlimited' ? '7 días ✓' : '1 consulta ✓';
-      ['pip0','pip1','pip2'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.style.background = 'var(--green)'; el.style.boxShadow = '0 0 6px var(--green)'; }
-      });
-    } else {
-      label.textContent = 'Verificar →';
-      ['pip0','pip1','pip2'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.classList.add('used'); }
-      });
-    }
-  }
-
-  // ─── INPUT TABS ───
   function switchInputTab(tab, btn) {
     activeTab = tab;
     document.querySelectorAll('.itab').forEach(t => t.classList.remove('active'));
@@ -1029,186 +980,241 @@
     document.getElementById('itab-text').style.display = tab === 'text' ? 'block' : 'none';
   }
 
-  // ─── LOADING STEPS ───
-  function animateSteps() {
-    const ids = ['ls0','ls1','ls2','ls3'];
-    let i = 0;
-    const tick = () => {
-      if (i > 0) {
-        const prev = document.getElementById(ids[i-1]);
-        prev.classList.remove('active'); prev.classList.add('done');
-        prev.querySelector('.lstep-dot').textContent = '✓';
-      }
-      if (i < ids.length) {
-        document.getElementById(ids[i]).classList.add('active');
-        i++; setTimeout(tick, 850);
-      }
-    };
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      el.classList.remove('active','done');
-      el.querySelector('.lstep-dot').textContent = '○';
-    });
-    tick();
-  }
-
-  // ─── MAIN VERIFY ───
-  async function startVerification() {
-    if (!activeToken) {
-      document.getElementById('paywallOverlay').style.display = 'flex';
-      return;
-    }
-
+  function getCheckoutPayload() {
     const input = activeTab === 'url'
       ? document.getElementById('ticketLink').value.trim()
       : document.getElementById('ticketDesc').value.trim();
 
-    if (!input) { showToast('⚠️ Escribe o pega algo primero', '#f5c400'); return; }
+    const email = document.getElementById('checkoutEmail').value.trim().toLowerCase();
 
-    document.getElementById('heroIdle').style.display = 'none';
-    document.getElementById('heroResult').style.display = 'none';
-    document.getElementById('heroLoading').style.display = 'block';
-    document.getElementById('demoMsg').textContent = 'Analizando con IA...';
-    animateSteps();
+    if (!input) {
+      showToast('⚠️ Pega un link o describe la oferta primero', '#f5c400');
+      return null;
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast('⚠️ Escribe un correo válido', '#f5c400');
+      return null;
+    }
+
+    return { input, email, type: activeTab };
+  }
+
+  function startPaymentFlow() {
+    const payload = getCheckoutPayload();
+    if (!payload) return;
+    pendingVerification = payload;
+    localStorage.setItem('ts_pending_verification', JSON.stringify(payload));
+    document.getElementById('paywallOverlay').style.display = 'flex';
+  }
+
+  function closePaywall() {
+    document.getElementById('paywallOverlay').style.display = 'none';
+  }
+
+  async function handlePayment(plan) {
+    const payload = pendingVerification || JSON.parse(localStorage.getItem('ts_pending_verification') || 'null');
+
+    if (!payload) {
+      closePaywall();
+      showToast('Falta link y correo para continuar', '#ff3333');
+      return;
+    }
+
+    closePaywall();
+    showToast('⏳ Redirigiendo a Stripe...', '#f5c400');
 
     try {
-      const resp = await fetch(`${FUNCTION_URL}/verificarBoleto`, {
+      const resp = await fetch(`${FUNCTION_URL}/crearPago`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input, type: activeTab, token: activeToken })
+        body: JSON.stringify({ plan, ...payload })
       });
 
       const data = await resp.json();
 
-      if (resp.status === 401 || resp.status === 403) {
-        activeToken = null; tokenPlan = null;
-        localStorage.removeItem('ts_token');
-        localStorage.removeItem('ts_plan');
-        updateAccessUI();
-        document.getElementById('heroLoading').style.display = 'none';
-        document.getElementById('heroIdle').style.display = 'block';
-        document.getElementById('paywallOverlay').style.display = 'flex';
-        showToast(data.error || 'Acceso agotado', '#ff3333');
+      if (!resp.ok || !data.url) {
+        showToast(data.error || 'Error al crear pago', '#ff3333');
         return;
       }
 
-      showResult(data, input);
-
-      if (tokenPlan === 'single') {
-        activeToken = null; tokenPlan = null;
-        localStorage.removeItem('ts_token');
-        localStorage.removeItem('ts_plan');
-        updateAccessUI();
-      }
-
-    } catch(err) {
-      console.error(err);
-      showToast('Error al analizar. Intenta de nuevo.', '#ff3333');
-      document.getElementById('heroLoading').style.display = 'none';
-      document.getElementById('heroIdle').style.display = 'block';
+      window.location.href = data.url;
+    } catch (e) {
+      console.error(e);
+      showToast('Error conectando con Stripe/Firebase', '#ff3333');
     }
   }
 
-  // ─── SHOW RESULT ───
+  function animateSteps() {
+    const ids = ['ls0','ls1','ls2','ls3'];
+    let i = 0;
+
+    const tick = () => {
+      if (i > 0) {
+        const prev = document.getElementById(ids[i-1]);
+        if (prev) {
+          prev.classList.remove('active');
+          prev.classList.add('done');
+          prev.querySelector('.lstep-dot').textContent = '✓';
+        }
+      }
+
+      if (i < ids.length) {
+        const current = document.getElementById(ids[i]);
+        if (current) current.classList.add('active');
+        i++;
+        setTimeout(tick, 850);
+      }
+    };
+
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('active','done');
+      el.querySelector('.lstep-dot').textContent = '○';
+    });
+
+    tick();
+  }
+
+  async function verifyAfterPayment(sessionId) {
+    document.getElementById('heroIdle').style.display = 'none';
+    document.getElementById('heroResult').style.display = 'none';
+    document.getElementById('heroLoading').style.display = 'block';
+    document.getElementById('demoMsg').textContent = 'Pago confirmado. Verificando y enviando correo...';
+    animateSteps();
+
+    try {
+      const resp = await fetch(`${FUNCTION_URL}/verificarDespuesDePago`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        throw new Error(data.error || 'No se pudo verificar');
+      }
+
+      localStorage.removeItem('ts_pending_verification');
+      showResult(data.result, data.input || '');
+      showToast(data.emailSent ? '✓ Resultado listo y enviado por correo' : '✓ Resultado listo. Correo pendiente por configurar');
+      window.history.replaceState({}, '', '/');
+    } catch (e) {
+      console.error(e);
+      document.getElementById('heroLoading').style.display = 'none';
+      document.getElementById('heroIdle').style.display = 'block';
+      showToast(e.message || 'Error verificando después del pago', '#ff3333');
+    }
+  }
+
+  (async () => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    if (sessionId) {
+      showToast('⏳ Confirmando pago...', '#f5c400');
+      await verifyAfterPayment(sessionId);
+    }
+  })();
+
   function showResult(r, inputQuery) {
     currentResult = { ...r, inputQuery };
+
     document.getElementById('heroLoading').style.display = 'none';
+    document.getElementById('heroIdle').style.display = 'none';
     document.getElementById('heroResult').style.display = 'block';
 
     const colorMap = { fraud: 'var(--red)', caution: 'var(--yellow)', safe: 'var(--green)' };
     const badgeMap = { fraud: '● Probable fraude', caution: '⚠ Precaución', safe: '✓ Parece seguro' };
     const titleMap = { fraud: 'No pagues todavía.', caution: 'Investiga antes de pagar.', safe: 'Sin señales críticas.' };
-    const color = colorMap[r.verdict];
+    const color = colorMap[r.verdict] || 'var(--yellow)';
 
-    document.getElementById('resultUrl').textContent = inputQuery.replace(/^https?:\/\//,'').slice(0,48);
-    document.getElementById('realBadge').textContent = badgeMap[r.verdict];
+    document.getElementById('resultUrl').textContent = (inputQuery || '').replace(/^https?:\/\//,'').slice(0,48);
+    document.getElementById('realBadge').textContent = badgeMap[r.verdict] || '⚠ Precaución';
     document.getElementById('realBadge').style.cssText = `display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;background:${color}22;color:${color};border:1px solid ${color}44;font-weight:800;font-size:13px`;
-    document.getElementById('realScore').textContent = r.riskScore;
+    document.getElementById('realScore').textContent = r.riskScore ?? '—';
     document.getElementById('realScore').style.color = color;
-    document.getElementById('realTitle').textContent = r.title || titleMap[r.verdict];
-    document.getElementById('realDesc').textContent = r.summary;
-    document.getElementById('scoreLabel').textContent = r.riskScore + '/100';
+    document.getElementById('realTitle').textContent = r.title || titleMap[r.verdict] || 'Resultado listo';
+    document.getElementById('realDesc').textContent = r.summary || '';
+    document.getElementById('scoreLabel').textContent = (r.riskScore ?? 0) + '/100';
     document.getElementById('scoreLabel').style.color = color;
 
     const bar = document.getElementById('scoreBar');
     bar.style.background = color;
-    setTimeout(() => { bar.style.width = r.riskScore + '%'; }, 80);
+    bar.style.width = '0%';
+    setTimeout(() => { bar.style.width = (r.riskScore || 0) + '%'; }, 80);
 
     const findings = document.getElementById('realFindings');
     findings.innerHTML = '';
+
     (r.signals || []).forEach(s => {
       const c = s.type === 'red' ? 'var(--red)' : s.type === 'yellow' ? 'var(--yellow)' : 'var(--green)';
       const div = document.createElement('div');
       div.className = 'finding';
-      div.innerHTML = `<span style="color:${c}">${s.icon}</span><span>${s.text}</span>`;
+      div.innerHTML = `<span style="color:${c}">${s.icon || '•'}</span><span>${s.text || ''}</span>`;
       findings.appendChild(div);
     });
 
-    document.getElementById('realExplanation').textContent = r.explanation;
-    document.getElementById('demoMsg').textContent = tokenPlan === 'unlimited' ? 'Acceso ilimitado 7 días activo' : 'Verificación completada';
+    document.getElementById('realExplanation').textContent = r.explanation || '';
+    document.getElementById('demoMsg').textContent = 'Resultado mostrado en pantalla. También se enviará por correo cuando Resend esté verificado.';
   }
 
-  // ─── RESET ───
   function resetResult() {
     currentResult = null;
     document.getElementById('heroResult').style.display = 'none';
     document.getElementById('heroIdle').style.display = 'block';
     document.getElementById('ticketLink').value = '';
     document.getElementById('ticketDesc').value = '';
+    document.getElementById('checkoutEmail').value = '';
     document.getElementById('scoreBar').style.width = '0%';
   }
 
-  // ─── WHATSAPP ───
   function shareWhatsApp() {
     if (!currentResult) return;
     const vm = { fraud:'🔴 PROBABLE FRAUDE', caution:'🟡 PRECAUCIÓN', safe:'🟢 PARECE SEGURO' };
-    const txt = `*TicketSeguro — Mundial 2026*\n\n${vm[currentResult.verdict]}\nRiesgo: ${currentResult.riskScore}/100\n\n${currentResult.summary}\n\n${currentResult.explanation}\n\n🔍 Verifica tú también: https://ticket-seguro.com`;
+    const txt = `*TicketSeguro*\n\n${vm[currentResult.verdict] || '🟡 PRECAUCIÓN'}\nRiesgo: ${currentResult.riskScore}/100\n\n${currentResult.summary}\n\n${currentResult.explanation}\n\n🔍 Verifica tú también: https://ticket-seguro.com`;
     window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
   }
 
-  // ─── REPORT ───
   function openReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
   function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
 
-  function submitReport() {
+  async function submitReport() {
     const text = document.getElementById('reportText').value.trim();
     if (!text) { showToast('Describe el fraude antes de enviar', '#f5c400'); return; }
-    const reports = JSON.parse(localStorage.getItem('ts_reports') || '[]');
-    reports.push({ text, input: currentResult?.inputQuery || '', ts: Date.now() });
-    localStorage.setItem('ts_reports', JSON.stringify(reports));
+
+    try {
+      await fetch(`${FUNCTION_URL}/reportarFraude`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, input: currentResult?.inputQuery || '', result: currentResult || null })
+      });
+    } catch(e) {
+      console.warn('Reporte no enviado al servidor', e);
+    }
+
     closeReportModal();
     document.getElementById('reportText').value = '';
     showToast('✓ Reporte enviado — gracias');
   }
- 
-  // ─── PAYWALL / PAGO ───
-  function closePaywall() { document.getElementById('paywallOverlay').style.display = 'none'; }
 
-  async function handlePayment(type) {
-    closePaywall();
-    showToast('⏳ Redirigiendo a pago...', '#f5c400');
-    try {
-      const resp = await fetch(`${FUNCTION_URL}/crearPago`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: type })
-      });
-      const data = await resp.json();
-      if (data.url) { window.location.href = data.url; }
-      else { showToast('Error al crear pago. Intenta de nuevo.', '#ff3333'); }
-    } catch(e) {
-      showToast('Error al conectar. Intenta de nuevo.', '#ff3333');
-    }
-  }
-
-  // ─── EMAIL CAPTURE ───
   const emails = JSON.parse(localStorage.getItem('ts_emails') || '[]');
 
   function handleSubmit() {
     const input = document.getElementById('emailInput');
     const email = input.value.trim().toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Escribe un email válido'); return; }
-    if (!emails.includes(email)) { emails.push(email); localStorage.setItem('ts_emails', JSON.stringify(emails)); }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast('Escribe un email válido', '#f5c400');
+      return;
+    }
+
+    if (!emails.includes(email)) {
+      emails.push(email);
+      localStorage.setItem('ts_emails', JSON.stringify(emails));
+    }
+
     document.getElementById('emailForm').style.display = 'none';
     const success = document.getElementById('formSuccess');
     success.style.display = 'block';
@@ -1217,7 +1223,8 @@
   }
 
   document.getElementById('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleSubmit(); });
-  document.getElementById('ticketLink').addEventListener('keydown', e => { if (e.key === 'Enter') startVerification(); });
+  document.getElementById('ticketLink').addEventListener('keydown', e => { if (e.key === 'Enter') startPaymentFlow(); });
+  document.getElementById('checkoutEmail').addEventListener('keydown', e => { if (e.key === 'Enter') startPaymentFlow(); });
 </script>
 </body>
 </html>
