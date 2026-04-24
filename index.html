@@ -958,6 +958,8 @@
 
   // ─── CONSTANTS ───
   const FUNCTION_URL = 'https://us-central1-ticket-seguro.cloudfunctions.net';
+
+  // ─── TOAST (definido primero) ───
   function showToast(msg, color) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -966,6 +968,7 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3200);
   }
+
   // ─── TOKEN STATE ───
   let activeToken = localStorage.getItem('ts_token') || null;
   let tokenPlan = localStorage.getItem('ts_plan') || null;
@@ -979,7 +982,7 @@
     if (sessionId) {
       showToast('⏳ Activando tu acceso...', '#f5c400');
       try {
-        const resp = await fetch(`${FUNCTION_URL}/activartoken`, {
+        const resp = await fetch(`${FUNCTION_URL}/activarToken`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId })
@@ -1069,7 +1072,7 @@
     animateSteps();
 
     try {
-      const resp = await fetch(`${FUNCTION_URL}/verificarboleto`, {
+      const resp = await fetch(`${FUNCTION_URL}/verificarBoleto`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input, type: activeTab, token: activeToken })
@@ -1185,7 +1188,7 @@
     closePaywall();
     showToast('⏳ Redirigiendo a pago...', '#f5c400');
     try {
-      const resp = await fetch(`${FUNCTION_URL}/crearpago`, {
+      const resp = await fetch(`${FUNCTION_URL}/crearPago`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: type })
