@@ -1190,9 +1190,12 @@ Solo JSON.`;
   // ─── PAYWALL ───
   function closePaywall() { document.getElementById('paywallOverlay').style.display = 'none'; }
   function handlePayment(type) {
-    // TODO: conectar Stripe Checkout
-    showToast('💳 Próximamente — checkout en construcción', '#70b7ff');
+    const links = {
+      unlimited: 'https://buy.stripe.com/eVq5kFedN2d91Ai7BBbMQ00',
+      single:    'https://buy.stripe.com/4gMdRb6Ll195a6O3llbMQ01'
+    };
     closePaywall();
+    window.open(links[type], '_blank');
   }
 
   // Enter key
