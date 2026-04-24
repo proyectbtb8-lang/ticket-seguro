@@ -660,6 +660,11 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.001ms !important; }
   }
+
+  @media (max-width: 640px) {
+    #itab-text div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -695,16 +700,59 @@
       </div>
       <div class="lead-card">
         <div class="input-tabs">
-          <button class="itab active" onclick="switchInputTab('url',this)">🔗 Link / URL</button>
-          <button class="itab" onclick="switchInputTab('text',this)">✍️ Describir oferta</button>
+          <button class="itab active" onclick="switchInputTab('url',this)">🔗 🔗 Link / perfil</button>
+          <button class="itab" onclick="switchInputTab('text',this)">💬 Facebook / WhatsApp</button>
         </div>
         <div id="itab-url">
-          <label class="input-label" for="ticketLink">1. Pega el link del vendedor o página</label>
+          <label class="input-label" for="ticketLink">1. Pega el link, perfil o describe la oferta</label>
           <input class="link-input" id="ticketLink" type="url" placeholder="https://boletos-mundial-oferta.com" />
         </div>
         <div id="itab-text" style="display:none">
-          <label class="input-label" for="ticketDesc">1. Describe lo que te están ofreciendo</label>
-          <textarea class="link-input" id="ticketDesc" rows="3" style="resize:none;border-radius:14px;padding:12px 15px;line-height:1.5;width:100%" placeholder="Ej: Me ofrecen 2 boletos para México vs Ecuador por $1,800 MXN. Solo acepta transferencia. Dice que solo tiene 2 horas…"></textarea>
+          <label class="input-label" for="ticketDesc">1. Describe o pega la conversación/oferta</label>
+          <textarea class="link-input" id="ticketDesc" rows="4" style="resize:none;border-radius:14px;padding:12px 15px;line-height:1.5;width:100%" placeholder="Ej: Me venden 2 boletos por Facebook/WhatsApp. Piden transferencia. Dicen que solo quedan 2 horas..."></textarea>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <select class="link-input" id="offerChannel" style="appearance:none">
+              <option value="">Canal</option>
+              <option value="facebook">Facebook</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="instagram">Instagram</option>
+              <option value="marketplace">Marketplace</option>
+              <option value="web">Página web</option>
+              <option value="other">Otro</option>
+            </select>
+            <input class="link-input" id="offerPrice" type="text" placeholder="Precio: ej. $1,800 MXN" />
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <select class="link-input" id="paymentMethod" style="appearance:none">
+              <option value="">Método de pago</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="oxxo">OXXO</option>
+              <option value="cripto">Cripto</option>
+              <option value="tarjeta_regalo">Tarjeta regalo</option>
+              <option value="tarjeta">Tarjeta</option>
+              <option value="paypal_goods">PayPal bienes/servicios</option>
+              <option value="plataforma_oficial">Plataforma oficial</option>
+              <option value="unknown">No sé</option>
+            </select>
+            <input class="link-input" id="sellerInfo" type="text" placeholder="Vendedor/perfil/cuenta" />
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <select class="link-input" id="urgencyFlag" style="appearance:none">
+              <option value="">¿Te presiona?</option>
+              <option value="yes">Sí, urge pagar</option>
+              <option value="no">No</option>
+              <option value="unknown">No sé</option>
+            </select>
+            <select class="link-input" id="officialTransfer" style="appearance:none">
+              <option value="">¿Transferencia oficial?</option>
+              <option value="yes">Sí, por plataforma oficial</option>
+              <option value="no">No, fuera de plataforma</option>
+              <option value="unknown">No sé</option>
+            </select>
+          </div>
         </div>
 
         <div style="margin-top:12px">
@@ -714,7 +762,7 @@
             <button class="primary-btn" id="verifyBtn" onclick="startPaymentFlow()">Pagar y verificar</button>
           </div>
         </div>
-        <div class="microcopy" id="demoMsg">Después del pago verificamos el link, mostramos el resultado y te mandamos el reporte por correo.</div>
+        <div class="microcopy" id="demoMsg">Después del pago revisamos indicadores técnicos, precio, vendedor, método de pago y señales de fraude.</div>
       </div>
     </div>
 
@@ -981,9 +1029,23 @@
   }
 
   function getCheckoutPayload() {
-    const input = activeTab === 'url'
+    const rawInput = activeTab === 'url'
       ? document.getElementById('ticketLink').value.trim()
       : document.getElementById('ticketDesc').value.trim();
+
+    let input = rawInput;
+
+    if (activeTab === 'text') {
+      const guided = {
+        canal: document.getElementById('offerChannel')?.value || '',
+        precio: document.getElementById('offerPrice')?.value || '',
+        metodoPago: document.getElementById('paymentMethod')?.value || '',
+        vendedor: document.getElementById('sellerInfo')?.value || '',
+        presion: document.getElementById('urgencyFlag')?.value || '',
+        transferenciaOficial: document.getElementById('officialTransfer')?.value || ''
+      };
+      input = JSON.stringify({ descripcion: rawInput, ...guided });
+    }
 
     const email = document.getElementById('checkoutEmail').value.trim().toLowerCase();
 
