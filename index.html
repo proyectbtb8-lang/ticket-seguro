@@ -958,8 +958,6 @@
 
   // ─── CONSTANTS ───
   const FUNCTION_URL = 'https://us-central1-ticket-seguro.cloudfunctions.net';
-
-  // ─── TOAST (definido primero) ───
   function showToast(msg, color) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -968,7 +966,6 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3200);
   }
-
   // ─── TOKEN STATE ───
   let activeToken = localStorage.getItem('ts_token') || null;
   let tokenPlan = localStorage.getItem('ts_plan') || null;
