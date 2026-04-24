@@ -1067,48 +1067,12 @@
 
   // ─── CLAUDE API ───
   async function callClaude(input, type) {
-    const system = `Eres un experto en detección de fraude de boletos para el Mundial FIFA 2026.
-Analiza y responde ÚNICAMENTE con un JSON válido, sin texto extra, sin markdown, sin backticks.
-
-Estructura exacta:
-{
-  "verdict": "fraud"|"caution"|"safe",
-  "riskScore": 0-100,
-  "summary": "frase corta max 12 palabras",
-  "title": "2-4 palabras de veredicto directo",
-  "explanation": "2-3 oraciones claras en español. Segunda persona.",
-  "signals": [{ "type": "red"|"yellow"|"green", "icon": "emoji", "text": "señal breve" }]
-}
-
-Reglas:
-- fraud: riskScore ≥65
-- caution: 30-64
-- safe: <30
-
-Señales ROJAS: dominio .xyz/.shop/.online, palabras "cheap/oferta/barato" en URL, precio >40% abajo del oficial, urgencia ("solo hoy","2 horas","últimos"), solo transferencia SPEI/Oxxo/efectivo/cripto sin escrow, sin HTTPS.
-Señales AMARILLAS: dominio genérico, precio 15-40% abajo, sin redes verificables, info incompleta.
-Señales VERDES: ticketmaster.com, tickets.fifa.com, fifa.com, precio rango oficial.
-
-Precios FIFA 2026 (MXN): Grupos $1800-$8000, Octavos/Cuartos $3500-$18000, Semis/Final $7000-$45000+.
-Solo JSON.`;
-
-    const msg = type === 'url'
-      ? `Analiza esta URL para fraude de boletos Mundial 2026: ${input}`
-      : `Analiza esta descripción de oferta de boletos: ${input}`;
-
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('https://verificarboleto-960800159919.us-central1.run.app', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
-        system,
-        messages: [{ role: 'user', content: msg }]
-      })
+      body: JSON.stringify({ input, type })
     });
-
-    const data = await resp.json();
-    return JSON.parse((data.content?.[0]?.text || '').replace(/```json|```/g,'').trim());
+    return await resp.json();
   }
 
   // ─── SHOW RESULT ───
