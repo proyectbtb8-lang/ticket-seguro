@@ -1067,7 +1067,7 @@
 
   // ─── CLAUDE API ───
   async function callClaude(input, type) {
-    const resp = await fetch('https://verificarboleto-960800159919.us-central1.run.app', {
+    const resp = await fetch('https://us-central1-ticket-seguro.cloudfunctions.net/verificarBoleto', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ input, type })
