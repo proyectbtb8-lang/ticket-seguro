@@ -956,46 +956,59 @@
   }, { threshold: 0.15 });
   document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
 
-  // ─── EMAIL CAPTURE ───
-  const emails = JSON.parse(localStorage.getItem('ts_emails') || '[]');
+  // ─── CONSTANTS ───
+  const FUNCTION_URL = 'https://us-central1-ticket-seguro.cloudfunctions.net';
 
-  function showToast(msg, color) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.style.background = color || 'var(--green)';
-    t.style.color = color ? '#fff' : '#001b0d';
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3200);
-  }
-
-  function handleSubmit() {
-    const input = document.getElementById('emailInput');
-    const email = input.value.trim().toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Escribe un email válido'); return; }
-    if (!emails.includes(email)) { emails.push(email); localStorage.setItem('ts_emails', JSON.stringify(emails)); }
-    document.getElementById('emailForm').style.display = 'none';
-    const success = document.getElementById('formSuccess');
-    success.style.display = 'block';
-    success.textContent = '✓ Listo. Te avisamos cuando lancemos TicketSeguro.';
-    showToast('✓ Registrado');
-  }
-
-  document.getElementById('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleSubmit(); });
-
-  // ─── FREEMIUM COUNTER ───
-  const FREE_LIMIT = 3;
-  let uses = parseInt(localStorage.getItem('ts_uses') || '0');
+  // ─── TOKEN STATE ───
+  let activeToken = localStorage.getItem('ts_token') || null;
+  let tokenPlan = localStorage.getItem('ts_plan') || null;
   let currentResult = null;
   let activeTab = 'url';
 
-  function updateUsesUI() {
-    const remaining = Math.max(0, FREE_LIMIT - uses);
-    document.getElementById('usesLabel').textContent = remaining === 0 ? 'Sin gratis' : remaining + ' gratis';
-    for (let i = 0; i < 3; i++) {
-      document.getElementById('pip' + i)?.classList.toggle('used', i >= remaining);
+  // ─── CHECK SESSION ON LOAD (regreso de Stripe) ───
+  (async () => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    if (sessionId) {
+      showToast('⏳ Activando tu acceso...', '#f5c400');
+      try {
+        const resp = await fetch(`${FUNCTION_URL}/activarToken`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        });
+        const data = await resp.json();
+        if (data.token) {
+          activeToken = data.token;
+          tokenPlan = data.plan;
+          localStorage.setItem('ts_token', data.token);
+          localStorage.setItem('ts_plan', data.plan);
+          showToast('✓ Acceso activado. Ya puedes verificar.', '#00e676');
+          window.history.replaceState({}, '', '/');
+        }
+      } catch(e) {
+        showToast('Error activando acceso. Contacta soporte.', '#ff3333');
+      }
+    }
+    updateAccessUI();
+  })();
+
+  function updateAccessUI() {
+    const label = document.getElementById('usesLabel');
+    if (activeToken) {
+      label.textContent = tokenPlan === 'unlimited' ? '7 días ✓' : '1 consulta ✓';
+      ['pip0','pip1','pip2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.background = 'var(--green)'; el.style.boxShadow = '0 0 6px var(--green)'; }
+      });
+    } else {
+      label.textContent = 'Verificar →';
+      ['pip0','pip1','pip2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.classList.add('used'); }
+      });
     }
   }
-  updateUsesUI();
 
   // ─── INPUT TABS ───
   function switchInputTab(tab, btn) {
@@ -1031,7 +1044,7 @@
 
   // ─── MAIN VERIFY ───
   async function startVerification() {
-    if (uses >= FREE_LIMIT) {
+    if (!activeToken) {
       document.getElementById('paywallOverlay').style.display = 'flex';
       return;
     }
@@ -1042,7 +1055,6 @@
 
     if (!input) { showToast('⚠️ Escribe o pega algo primero', '#f5c400'); return; }
 
-    // Show loading
     document.getElementById('heroIdle').style.display = 'none';
     document.getElementById('heroResult').style.display = 'none';
     document.getElementById('heroLoading').style.display = 'block';
@@ -1050,42 +1062,52 @@
     animateSteps();
 
     try {
-      const result = await callClaude(input, activeTab);
-      showResult(result, input);
+      const resp = await fetch(`${FUNCTION_URL}/verificarBoleto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input, type: activeTab, token: activeToken })
+      });
 
-      uses++;
-      localStorage.setItem('ts_uses', uses.toString());
-      updateUsesUI();
+      const data = await resp.json();
+
+      if (resp.status === 401 || resp.status === 403) {
+        activeToken = null; tokenPlan = null;
+        localStorage.removeItem('ts_token');
+        localStorage.removeItem('ts_plan');
+        updateAccessUI();
+        document.getElementById('heroLoading').style.display = 'none';
+        document.getElementById('heroIdle').style.display = 'block';
+        document.getElementById('paywallOverlay').style.display = 'flex';
+        showToast(data.error || 'Acceso agotado', '#ff3333');
+        return;
+      }
+
+      showResult(data, input);
+
+      if (tokenPlan === 'single') {
+        activeToken = null; tokenPlan = null;
+        localStorage.removeItem('ts_token');
+        localStorage.removeItem('ts_plan');
+        updateAccessUI();
+      }
+
     } catch(err) {
       console.error(err);
       showToast('Error al analizar. Intenta de nuevo.', '#ff3333');
       document.getElementById('heroLoading').style.display = 'none';
       document.getElementById('heroIdle').style.display = 'block';
-      document.getElementById('demoMsg').textContent = '3 verificaciones gratis. Sin registro.';
     }
-  }
-
-  // ─── CLAUDE API ───
-  async function callClaude(input, type) {
-    const resp = await fetch('https://us-central1-ticket-seguro.cloudfunctions.net/verificarBoleto', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ input, type })
-    });
-    return await resp.json();
   }
 
   // ─── SHOW RESULT ───
   function showResult(r, inputQuery) {
     currentResult = { ...r, inputQuery };
-
     document.getElementById('heroLoading').style.display = 'none';
     document.getElementById('heroResult').style.display = 'block';
 
     const colorMap = { fraud: 'var(--red)', caution: 'var(--yellow)', safe: 'var(--green)' };
     const badgeMap = { fraud: '● Probable fraude', caution: '⚠ Precaución', safe: '✓ Parece seguro' };
     const titleMap = { fraud: 'No pagues todavía.', caution: 'Investiga antes de pagar.', safe: 'Sin señales críticas.' };
-
     const color = colorMap[r.verdict];
 
     document.getElementById('resultUrl').textContent = inputQuery.replace(/^https?:\/\//,'').slice(0,48);
@@ -1113,7 +1135,7 @@
     });
 
     document.getElementById('realExplanation').textContent = r.explanation;
-    document.getElementById('demoMsg').textContent = `Resultado real · ${Math.max(0, FREE_LIMIT - uses)} verificaciones gratis restantes`;
+    document.getElementById('demoMsg').textContent = tokenPlan === 'unlimited' ? 'Acceso ilimitado 7 días activo' : 'Verificación completada';
   }
 
   // ─── RESET ───
@@ -1123,7 +1145,6 @@
     document.getElementById('heroIdle').style.display = 'block';
     document.getElementById('ticketLink').value = '';
     document.getElementById('ticketDesc').value = '';
-    document.getElementById('demoMsg').textContent = '3 verificaciones gratis. Sin registro.';
     document.getElementById('scoreBar').style.width = '0%';
   }
 
@@ -1131,7 +1152,7 @@
   function shareWhatsApp() {
     if (!currentResult) return;
     const vm = { fraud:'🔴 PROBABLE FRAUDE', caution:'🟡 PRECAUCIÓN', safe:'🟢 PARECE SEGURO' };
-    const txt = `*TicketSeguro — Mundial 2026*\n\n${vm[currentResult.verdict]}\nRiesgo: ${currentResult.riskScore}/100\n\n${currentResult.summary}\n\n${currentResult.explanation}\n\n🔍 Verifica tú también: https://ticketseguro.mx`;
+    const txt = `*TicketSeguro — Mundial 2026*\n\n${vm[currentResult.verdict]}\nRiesgo: ${currentResult.riskScore}/100\n\n${currentResult.summary}\n\n${currentResult.explanation}\n\n🔍 Verifica tú también: https://ticket-seguro.com`;
     window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
   }
 
@@ -1145,24 +1166,47 @@
     const reports = JSON.parse(localStorage.getItem('ts_reports') || '[]');
     reports.push({ text, input: currentResult?.inputQuery || '', ts: Date.now() });
     localStorage.setItem('ts_reports', JSON.stringify(reports));
-    // TODO: enviar a Firestore → reports collection
     closeReportModal();
     document.getElementById('reportText').value = '';
     showToast('✓ Reporte enviado — gracias');
   }
 
-  // ─── PAYWALL ───
+  // ─── PAYWALL / PAGO ───
   function closePaywall() { document.getElementById('paywallOverlay').style.display = 'none'; }
-  function handlePayment(type) {
-    const links = {
-      unlimited: 'https://buy.stripe.com/eVq5kFedN2d91Ai7BBbMQ00',
-      single:    'https://buy.stripe.com/4gMdRb6Ll195a6O3llbMQ01'
-    };
+
+  async function handlePayment(type) {
     closePaywall();
-    window.open(links[type], '_blank');
+    showToast('⏳ Redirigiendo a pago...', '#f5c400');
+    try {
+      const resp = await fetch(`${FUNCTION_URL}/crearPago`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: type })
+      });
+      const data = await resp.json();
+      if (data.url) { window.location.href = data.url; }
+      else { showToast('Error al crear pago. Intenta de nuevo.', '#ff3333'); }
+    } catch(e) {
+      showToast('Error al conectar. Intenta de nuevo.', '#ff3333');
+    }
   }
 
-  // Enter key
+  // ─── EMAIL CAPTURE ───
+  const emails = JSON.parse(localStorage.getItem('ts_emails') || '[]');
+
+  function handleSubmit() {
+    const input = document.getElementById('emailInput');
+    const email = input.value.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Escribe un email válido'); return; }
+    if (!emails.includes(email)) { emails.push(email); localStorage.setItem('ts_emails', JSON.stringify(emails)); }
+    document.getElementById('emailForm').style.display = 'none';
+    const success = document.getElementById('formSuccess');
+    success.style.display = 'block';
+    success.textContent = '✓ Listo. Te avisamos cuando lancemos TicketSeguro.';
+    showToast('✓ Registrado');
+  }
+
+  document.getElementById('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleSubmit(); });
   document.getElementById('ticketLink').addEventListener('keydown', e => { if (e.key === 'Enter') startVerification(); });
 </script>
 </body>
